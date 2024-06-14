@@ -1,6 +1,7 @@
 ## Introduction
 
-***This is not the official code repository for [InfiniAttention](https://arxiv.org/pdf/2404.07143)***. 
+***This is not the official code repository for [Leave No Context Behind:
+Efficient Infinite Context Transformers with Infini-attention](https://arxiv.org/pdf/2404.07143)***. 
 
 This is just my own simple implementation based on the paper, which at the time of writing,
 has not released the code. There are some details that I have yet to figure out nicely, which I will detail below.
