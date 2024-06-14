@@ -3,7 +3,7 @@
 ***This is not the official code repository for [Leave No Context Behind:
 Efficient Infinite Context Transformers with Infini-attention](https://arxiv.org/pdf/2404.07143)***. 
 
-This is just my own simple implementation based on the paper, which at the time of writing,
+This is just my own simple PyTorch implementation based on the paper, which at the time of writing,
 has not released the code. There are some details that I have yet to figure out nicely, which I will detail below.
 
 InfiniAttention is a new technique for increasing context windows in LLMs "infinitely". The basic idea is to propagate attention matrices spatially (like storing a hidden vector), but instead of
