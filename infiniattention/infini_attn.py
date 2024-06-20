@@ -218,9 +218,10 @@ class InfiniAttn(nn.Module):
 
         out = []
         for seq in seqs:
-            out = self._forward(seq, attn_mask)
+            o = self._forward(seq, attn_mask)
+            out.append(o)
 
-        return out
+        return torch.concat(out, dim=1)
 
 
 if __name__ == "__main__":
