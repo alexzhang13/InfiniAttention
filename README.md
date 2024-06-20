@@ -33,6 +33,9 @@ Yep, that's it. Super barebones.
 
 Honestly, if you need this implementation, I'd just grab the InfiniAttention module and throw it into your own code. The above issues are just if I want to build out a full model.
 
+I also noticed that the division operator that's done in the original paper makes a lot of assumptions about the data that can cause NaNs. I just add a little epsilon term for stability,
+but generally division seems quite dangerous.
+
 ## Data Prepration and Experiments [WIP]
 This is taken from the Transformer-XL repository. I haven't actually been able to get the time or compute to train a full model. I can only confirm that the mechanism is correct
 according to my understanding of the paper. But I'll revisit this.
