@@ -3,7 +3,43 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+def naive_chunking(sequence: torch.Tensor, chunk_size: int, padding=True):
+    """
+    Chunk a sequence of shape (B x S x D) where B is batch size,
+    S is sequence length, and D is embedding dimension into chunks
+    of length chunk_size. The last chunk gets padded if padding is True.
+    """
+    end = sequence.size(1)
+    chunks = []
+    for i in range(0, end, chunk_size):
+        chunks.append(sequence[:, i : i + chunk_size, :])
+
+    # print("chunks", [c.shape for c in chunks])
+    if len(chunks) > 0 and end % chunk_size != 0 and padding:
+        last_chunk = chunks[-1]
+        chunks[-1] = torch.cat(
+            [
+                last_chunk,
+                torch.zeros(
+                    last_chunk.shape[0],
+                    (chunk_size - end % chunk_size),
+                    last_chunk.shape[2],
+                ),
+            ],
+            dim=1,
+        )
+    #    print(chunks[-1].shape)
+    #    print(chunks[-1])
+
+    return chunks
+
+
 class InfiniAttn(nn.Module):
+    """
+    Implementation of InfiniAttention.
+    To keep cached attention matrices a fixed size, we pad.
+    """
+
     def __init__(
         self,
         n_head,
@@ -14,6 +50,7 @@ class InfiniAttn(nn.Module):
         dropatt=0,
         pre_lnorm=False,
         beta_eps=1e-2,
+        eps=1e-6,
     ):
         super(InfiniAttn, self).__init__()
 
@@ -32,6 +69,7 @@ class InfiniAttn(nn.Module):
             None  # torch.zeros((n_head, d_head), requires_grad=False)
         )
         self.mem_activation = nn.ELU()
+        self.eps = eps  # the division operation is unstable, epsecially with zeros
 
         self.beta = torch.ones((1)) * beta_eps
 
@@ -75,8 +113,9 @@ class InfiniAttn(nn.Module):
 
             # B * n_head * N * d_head
             numerator = torch.einsum("bsnk,bnkv->bsnv", (cached_Q, self.memory))
-            denominator = torch.einsum(
-                "bsnk,bvnk->bsnv", (cached_Q, self.memory_normalization)
+            denominator = (
+                torch.einsum("bsnk,bvnk->bsnv", (cached_Q, self.memory_normalization))
+                + self.eps
             )
             # n_head * N * d_head
             self.content_A = (numerator / denominator).detach()
@@ -88,8 +127,9 @@ class InfiniAttn(nn.Module):
 
             # n_head * N * d_head
             numerator = torch.einsum("bsnk,bnkv->bsnv", (cached_K, self.memory))
-            denominator = torch.einsum(
-                "bsnk,bvnk->bsnv", (cached_K, self.memory_normalization)
+            denominator = (
+                torch.einsum("bsnk,bvnk->bsnv", (cached_K, self.memory_normalization))
+                + self.eps
             )
             # n_head * N * d_head
             delta = numerator / denominator
@@ -174,9 +214,7 @@ class InfiniAttn(nn.Module):
         return output
 
     def forward(self, h, attn_mask=None):
-        num_tokens = h.size(1)
-        chunks = num_tokens // self.seq_len
-        seqs = torch.chunk(h, chunks=(chunks), dim=1)
+        seqs = naive_chunking(h, chunk_size=self.seq_len, padding=True)
 
         out = []
         for seq in seqs:
@@ -192,5 +230,5 @@ if __name__ == "__main__":
         n_head=5, d_model=d_model, d_head=256, seq_len=seq_length, dropout=0.5
     )
 
-    h = torch.rand((2, 10 * seq_length, d_model))
+    h = torch.rand((2, 10 * seq_length + 1900, d_model))
     print(attn(h))
