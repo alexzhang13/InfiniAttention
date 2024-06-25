@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def naive_chunking(sequence: torch.Tensor, chunk_size: int, padding=True):
+def naive_chunking(sequence: torch.Tensor, chunk_size: int, device, padding=True):
     """
     Chunk a sequence of shape (B x S x D) where B is batch size,
     S is sequence length, and D is embedding dimension into chunks
@@ -24,6 +24,7 @@ def naive_chunking(sequence: torch.Tensor, chunk_size: int, padding=True):
                     last_chunk.shape[0],
                     (chunk_size - end % chunk_size),
                     last_chunk.shape[2],
+                    device=device,
                 ),
             ],
             dim=1,
@@ -85,6 +86,9 @@ class InfiniAttn(nn.Module):
         self.scale = 1 / (d_head**0.5)
 
         self.pre_lnorm = pre_lnorm
+
+        self.device = next(self.parameters()).device
+        print("InfiniAttention device lives on", self.device)
 
     def _update_memory(self, Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor):
         """
@@ -216,7 +220,9 @@ class InfiniAttn(nn.Module):
         return output
 
     def forward(self, h, attn_mask=None):
-        seqs = naive_chunking(h, chunk_size=self.seq_len, padding=True)
+        seqs = naive_chunking(
+            h, chunk_size=self.seq_len, device=self.device, padding=True
+        )
 
         out = []
 
