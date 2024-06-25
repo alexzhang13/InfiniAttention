@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def naive_chunking(sequence: torch.Tensor, chunk_size: int, device, padding=True):
+def naive_chunking(sequence: torch.Tensor, chunk_size: int, padding=True):
     """
     Chunk a sequence of shape (B x S x D) where B is batch size,
     S is sequence length, and D is embedding dimension into chunks
@@ -24,7 +24,7 @@ def naive_chunking(sequence: torch.Tensor, chunk_size: int, device, padding=True
                     last_chunk.shape[0],
                     (chunk_size - end % chunk_size),
                     last_chunk.shape[2],
-                    device=device,
+                    device=last_chunk.device,
                 ),
             ],
             dim=1,
@@ -220,9 +220,7 @@ class InfiniAttn(nn.Module):
         return output
 
     def forward(self, h, attn_mask=None):
-        seqs = naive_chunking(
-            h, chunk_size=self.seq_len, device=self.device, padding=True
-        )
+        seqs = naive_chunking(h, chunk_size=self.seq_len, padding=True)
 
         out = []
 
