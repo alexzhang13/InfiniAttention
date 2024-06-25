@@ -160,7 +160,7 @@ class InfiniAttn(nn.Module):
 
     def _forward(self, h, attn_mask=None, mems=None):
         ##### multihead attention
-        # [hlen x bsz x n_head x d_head]
+        # [bsz x hlen x n_head x d_head]
 
         if mems is not None:
             c = torch.cat([mems, h], 0)
@@ -178,21 +178,23 @@ class InfiniAttn(nn.Module):
         head_k = head_k.view(c.size(0), c.size(1), self.n_head, self.d_head)
         head_v = head_v.view(c.size(0), c.size(1), self.n_head, self.d_head)
 
-        # [qlen x klen x bsz x n_head]
-        attn_score = torch.einsum("ibnd,jbnd->ijbn", (head_q, head_k))
+        # [bsz x qlen x klen x n_head]
+        attn_score = torch.einsum("bind,bjnd->bijn", (head_q, head_k))
         attn_score.mul_(self.scale)
         if attn_mask is not None and attn_mask.any().item():
             if attn_mask.dim() == 2:
                 attn_score.masked_fill_(attn_mask[None, :, :, None], -float("inf"))
             elif attn_mask.dim() == 3:
+                print(attn_score.shape)
+                print(attn_mask.shape)
                 attn_score.masked_fill_(attn_mask[:, :, :, None], -float("inf"))
 
-        # [qlen x klen x bsz x n_head]
+        # [bsz qlen x klen x n_head]
         attn_prob = F.softmax(attn_score, dim=1)
         attn_prob = self.dropatt(attn_prob)
 
-        # [qlen x klen x bsz x n_head] + [klen x bsz x n_head x d_head] -> [qlen x bsz x n_head x d_head]
-        attn_vec = torch.einsum("ijbn,jbnd->ibnd", (attn_prob, head_v))
+        # [bsz x qlen x klen x n_head] + [bsz x klen x n_head x d_head] -> [bsz x qlen x n_head x d_head]
+        attn_vec = torch.einsum("bijn,bjnd->bind", (attn_prob, head_v))
         attn_vec = attn_vec.contiguous().view(
             attn_vec.size(0), attn_vec.size(1), self.n_head * self.d_head
         )
@@ -217,8 +219,12 @@ class InfiniAttn(nn.Module):
         seqs = naive_chunking(h, chunk_size=self.seq_len, padding=True)
 
         out = []
-        for seq in seqs:
-            o = self._forward(seq, attn_mask)
+
+        for i, seq in enumerate(seqs):
+            mask = None
+            if attn_mask is not None:
+                mask = attn_mask[..., i : i + self.seq_len, i : i + self.seq_len].bool()
+            o = self._forward(seq, mask)
             out.append(o)
 
         return torch.concat(out, dim=1)
@@ -232,4 +238,5 @@ if __name__ == "__main__":
     )
 
     h = torch.rand((2, 10 * seq_length + 1900, d_model))
-    print(attn(h))
+    causal_mask = torch.triu(torch.ones((h.size(0), h.size(1), h.size(1))), diagonal=1)
+    print(attn(h, attn_mask=causal_mask))
