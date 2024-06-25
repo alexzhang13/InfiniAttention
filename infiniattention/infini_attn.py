@@ -105,7 +105,9 @@ class InfiniAttn(nn.Module):
 
             if self.memory is None:
                 self.content_A = torch.zeros(
-                    (B, self.seq_len, self.n_head, self.d_head), requires_grad=False
+                    (B, self.seq_len, self.n_head, self.d_head),
+                    requires_grad=False,
+                    device=Q.device,
                 )
                 self.memory = torch.einsum("bsnk,bsnv->bnkv", (cached_K, V))
                 self.memory_normalization = torch.sum(cached_K, dim=1, keepdim=True)
