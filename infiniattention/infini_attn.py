@@ -29,8 +29,6 @@ def naive_chunking(sequence: torch.Tensor, chunk_size: int, padding=True):
             ],
             dim=1,
         )
-    #    print(chunks[-1].shape)
-    #    print(chunks[-1])
 
     return chunks
 
@@ -72,8 +70,6 @@ class InfiniAttn(nn.Module):
         self.mem_activation = nn.ELU()
         self.eps = eps  # the division operation is unstable, epsecially with zeros
 
-        self.beta = torch.ones((1)) * beta_eps
-
         self.q_net = nn.Linear(d_model, n_head * d_head, bias=False)
         self.kv_net = nn.Linear(d_model, 2 * n_head * d_head, bias=False)
 
@@ -89,6 +85,8 @@ class InfiniAttn(nn.Module):
 
         self.device = next(self.parameters()).device
         print("InfiniAttention device lives on", self.device)
+
+        self.beta = torch.ones((1), device=self.device) * beta_eps
 
     def _update_memory(self, Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor):
         """
@@ -191,8 +189,6 @@ class InfiniAttn(nn.Module):
             if attn_mask.dim() == 2:
                 attn_score.masked_fill_(attn_mask[None, :, :, None], -float("inf"))
             elif attn_mask.dim() == 3:
-                print(attn_score.shape)
-                print(attn_mask.shape)
                 attn_score.masked_fill_(attn_mask[:, :, :, None], -float("inf"))
 
         # [bsz qlen x klen x n_head]
