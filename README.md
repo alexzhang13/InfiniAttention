@@ -10,13 +10,10 @@ InfiniAttention is a new technique for increasing context windows in LLMs "infin
 learning the hidden vector, it is just a nice representation of the sum of the previous attention matrices. The concept is super simple, but a few details are kind of weird. 
 The memory complexity is therefore only with respect to a local context window, makes increasing the context window an o(1) operation.
 
-The rest of this repository is basically a stripped and simpler version of the [Transformer-XL](https://github.com/kimiyoung/transformer-xl/) repository with my own implementation of
-[InfiniAttention](https://arxiv.org/pdf/2404.07143). The reason I chose this repo is because both papers treat sequences 
-
 I've also removed the Tensorflow implementation, but may re-visit it in the future.
 
-The main thing to look at is [`infiniattention/infiniattn_transformer.py`](https://github.com/alexzhang13/InfiniAttention/blob/main/infiniattention/infiniattn_transformer.py), although [`infiniattention/infini_attn.py`](https://github.com/alexzhang13/InfiniAttention/blob/main/infiniattention/infini_attn.py) contains just the InfiniAttention layer if you need that. All the other
-files are modified from the train loop from [Transformer-XL](https://github.com/kimiyoung/transformer-xl/).
+I originally adapted this for a [`infiniattention/infiniattn_transformer.py`](https://github.com/alexzhang13/InfiniAttention/blob/main/infiniattention/infiniattn_transformer.py), but I have stripped down the repo to just refer to [`infiniattention/infini_attn.py`](https://github.com/alexzhang13/InfiniAttention/blob/main/infini_attn.py) contains just the InfiniAttention layer. 
+If you want to quickly adapt it, just modify the model from [Transformer-XL](https://github.com/kimiyoung/transformer-xl/).
 
 ## Prerequisite
 
