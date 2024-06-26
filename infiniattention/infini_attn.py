@@ -88,6 +88,11 @@ class InfiniAttn(nn.Module):
 
         self.beta = torch.ones((1), device=self.device) * beta_eps
 
+    def reset_memory(self):
+        self.memory = None
+        self.content_A = None
+        self.memory_normalization = None
+
     def _update_memory(self, Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor):
         """
         Private method for updating the InfiniteAttention memory module.
@@ -116,6 +121,8 @@ class InfiniAttn(nn.Module):
             """
 
             # B * n_head * N * d_head
+            print("cached Q size", cached_Q.shape)
+            print("memory size", self.memory.shape)
             numerator = torch.einsum("bsnk,bnkv->bsnv", (cached_Q, self.memory))
             denominator = (
                 torch.einsum("bsnk,bvnk->bsnv", (cached_Q, self.memory_normalization))
@@ -218,6 +225,11 @@ class InfiniAttn(nn.Module):
         return output
 
     def forward(self, h, attn_mask=None):
+        """
+        Outer-level forward pass.
+        """
+        self.reset_memory()
+
         seqs = naive_chunking(h, chunk_size=self.seq_len, padding=True)
 
         out = []
@@ -239,6 +251,12 @@ if __name__ == "__main__":
         n_head=5, d_model=d_model, d_head=256, seq_len=seq_length, dropout=0.5
     )
 
-    h = torch.rand((2, 10 * seq_length + 1900, d_model))
+    print("simulating train")
+    h = torch.rand((4, 4 * seq_length + 1900, d_model))
+    causal_mask = torch.triu(torch.ones((h.size(0), h.size(1), h.size(1))), diagonal=1)
+    print("train output", attn(h, attn_mask=causal_mask))
+
+    print("simulating eval")
+    h = torch.rand((7, 4 * seq_length + 1900, d_model))
     causal_mask = torch.triu(torch.ones((h.size(0), h.size(1), h.size(1))), diagonal=1)
     print(attn(h, attn_mask=causal_mask))
