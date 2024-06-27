@@ -12,7 +12,7 @@ The memory complexity is therefore only with respect to a local context window, 
 
 I've also removed the Tensorflow implementation, but may re-visit it in the future.
 
-I originally adapted this for a [`infiniattention/infiniattn_transformer.py`](https://github.com/alexzhang13/InfiniAttention/blob/main/infiniattention/infiniattn_transformer.py), but I have stripped down the repo to just refer to [`infiniattention/infini_attn.py`](https://github.com/alexzhang13/InfiniAttention/blob/main/infini_attn.py) contains just the InfiniAttention layer. 
+I originally adapted this for a [`infiniattention/infiniattn_transformer.py`](https://github.com/alexzhang13/InfiniAttention/blob/main/infiniattention/infiniattn_transformer.py), but I have stripped down the repo to just refer to [`infiniattention/infini_attn.py`](https://github.com/alexzhang13/InfiniAttention/blob/main/infini_attn.py), which contains just the InfiniAttention layer and a simple unit test.
 If you want to quickly adapt it, just modify the model from [Transformer-XL](https://github.com/kimiyoung/transformer-xl/).
 
 ## Prerequisite
@@ -33,7 +33,7 @@ Honestly, if you need this implementation, I'd just grab the InfiniAttention mod
 I also noticed that the division operator that's done in the original paper makes a lot of assumptions about the data that can cause NaNs. I just add a little epsilon term for stability,
 but generally division seems quite dangerous.
 
-## Data Prepration and Experiments [WIP]
+## Data Preparation and Experiments [WIP]
 This is taken from the Transformer-XL repository. I haven't actually been able to get the time or compute to train a full model. I can only confirm that the mechanism is correct
 according to my understanding of the paper. But I'll revisit this.
 
