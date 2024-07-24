@@ -67,7 +67,8 @@ class InfiniAttn(nn.Module):
         self.memory_normalization = (
             None  # torch.zeros((n_head, d_head), requires_grad=False)
         )
-        self.mem_activation = nn.ELU()
+        self.elu = nn.ELU()
+        self.mem_activation = lambda x : self.elu(x) + 1
         self.eps = eps  # the division operation is unstable, epsecially with zeros
 
         self.q_net = nn.Linear(d_model, n_head * d_head, bias=False)
